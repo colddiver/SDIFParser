@@ -1,0 +1,27 @@
+{
+	"keywords" : [
+		"sd3 sdif swimming"
+	],
+	"autoload" : {
+		"psr-4" : {
+			"Colddiver\\SDIFParser\\" : "src"
+		}
+	},
+	"name" : "colddiver/SDIFParser",
+	"description" : "PHP Parser for United States Swimming Interchange Format (Version 3)",
+	"license" : "MIT",
+	"type" : "library",
+	"require" : {
+		"php" : ">=7.3"
+	},
+	"homepage" : "https://github.com/colddiver/SDIFParser",
+	"support" : {
+		"email" : "ebeaule@mac.com"
+	},
+	"authors" : [{
+			"name" : "Étienne Beaulé",
+			"email" : "ebeaule@mac.com",
+			"homepage" : "www.colddiver.com"
+		}
+	]
+}
