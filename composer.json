@@ -4,10 +4,10 @@
 	],
 	"autoload" : {
 		"psr-4" : {
-			"Colddiver\\SDIFParser\\" : "src"
+			"SdifParser\\" : "src"
 		}
 	},
-	"name" : "colddiver/SDIFParser",
+	"name" : "colddiver/sdifparser",
 	"description" : "PHP Parser for United States Swimming Interchange Format (Version 3)",
 	"license" : "MIT",
 	"type" : "library",
@@ -20,8 +20,12 @@
 	},
 	"authors" : [{
 			"name" : "Étienne Beaulé",
-			"email" : "ebeaule@mac.com",
-			"homepage" : "www.colddiver.com"
+			"homepage" : "https://www.colddiver.com/"
+		}
+	],
+	"repositories" : [{
+			"type" : "git",
+			"url" : "https://github.com/colddiver/sdif-parser.git"
 		}
 	]
 }
