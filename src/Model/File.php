@@ -13,60 +13,18 @@ use JsonSerializable;
 class File implements JsonSerializable
 {
 
-    /**
-     * 
-     * @var string
-     */
     private $path;
-    
-    /**
-     * @var string
-     */
+    private $orgCode;
+    private $orgDescription;
     private $sdifVersion;
-    
-    /**
-     * 
-     * @var int
-     */
     private $code;
-    
-    /**
-     * 
-     * @var string
-     */
     private $description;
-    
-    /**
-     * 
-     * @var string
-     */
     private $software;
-    
-    /**
-     * 
-     * @var string
-     */
     private $softwareVersion;
-    
-    /**
-     * 
-     * @var string
-     */
     private $contact;
-    
-    
-    /**
-     * 
-     * @var string
-     */
     private $contactPhone;
-    
-    /**
-     * 
-     * @var string
-     */
     private $date;
-    
+    private $meet;
     
     public function getPath(): string {
         return $this->path;
@@ -74,6 +32,55 @@ class File implements JsonSerializable
     
     public function setPath(string $value) {
         $this->path = $value;
+    }
+    
+    public function getOrgCode(): string {
+        return $this->orgCode;
+    }
+    
+    public function setOrgCode(string $value) {
+        $this->orgCode = $value;
+        $this->setOrgDescription($value);
+    }
+    
+    public function getOrgDescription(): string {
+        return $this->orgDescription;
+    }
+    
+    public function setOrgDescription(string $value) {
+        
+        switch ($value) {
+            case '1':
+                $this->orgDescription = 'USS';
+                break;
+            case '2':
+                $this->orgDescription = 'Masters';
+                break;
+            case '3':
+                $this->orgDescription = 'NCAA';
+                break;
+            case '4':
+                $this->orgDescription = 'NCAA Div I';
+                break;
+            case '5':
+                $this->orgDescription = 'NCAA Div II';
+                break;
+            case '6':
+                $this->orgDescription = 'NCAA Div III';
+                break;
+            case '7':
+                $this->orgDescription = 'YMCA';
+                break;
+            case '8':
+                $this->orgDescription = 'FINA';
+                break;
+            case '9':
+                $this->orgDescription = 'High School';
+                break;
+            default:
+                $this->orgDescription = 'Unknown';
+                break;
+        }
     }
     
     public function getSdifVersion(): string {
@@ -85,11 +92,11 @@ class File implements JsonSerializable
     }
     
     public function getCode(): int {
-        return $this->Code;
+        return $this->code;
     }
     
     public function setCode(int $value) {
-        $this->Code = $value;
+        $this->code = $value;
         $this->setDescription($value);
     }
     
@@ -182,6 +189,14 @@ class File implements JsonSerializable
         $this->date = DateTime::createFromFormat('mdY', $value);
     }
     
+    public function getMeet(): Meet {
+        return $this->meet;
+    }
+    
+    public function setMeet(Meet $value) {
+        $this->meet = $value;
+    }
+    
     /*
     public function get(): string {
         return $this->;
@@ -195,6 +210,8 @@ class File implements JsonSerializable
     public function jsonSerialize() {
         return [
             'path' => $this->path,
+            'orgCode' => $this->orgCode,
+            'orgDesription' => $this->orgDescription,
             'sdifVersion' => $this->sdifVersion,
             'code' => $this->code,
             'description' => $this->description,
@@ -202,7 +219,8 @@ class File implements JsonSerializable
             'softwareVersion' => $this->softwareVersion,
             'contact' => $this->contact,
             'contactPhone' => $this->contactPhone,
-            'date' => $this->getDate()
+            'date' => $this->getDate(),
+            'meet' => $this->meet
         ];
     }
 }

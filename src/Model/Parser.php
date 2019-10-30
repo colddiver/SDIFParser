@@ -9,19 +9,25 @@ namespace SdifParser\Model;
  */
 class Parser
 {
-    public function parse_file(string $filePath) {
+    
+    use Common;
+    
+    public function parse_file(string $filePath, string $defaultCountry) {
         
         $parsedFile = new File();
         $parsedFile->setPath($filePath);
         
         $sd3 = file_get_contents($filePath);
         $rows = explode("\n", $sd3);
+        
+        //$timeEntry (TimeEntry::class);
 
         foreach ($rows as $data) {
             $code = substr($data, 0, 2);
             
             switch ($code) {
                 case 'A0':  //File
+                    $parsedFile->setOrgCode($this->extract($data, 3, 1));
                     $parsedFile->setSdifVersion($this->extract($data, 4, 8));
                     $parsedFile->setCode($this->extract($data, 12, 2));
                     $parsedFile->setSoftware($this->extract($data, 44, 20));
@@ -30,152 +36,311 @@ class Parser
                     $parsedFile->setContactPhone($this->extract($data, 94, 12));
                     $parsedFile->setDate($this->extract($data, 106, 8));
                     break;
-                /*
+                
                 case 'B1':  //Meet
-                    $meet['name'] = utf8_encode(trim(substr($data, 11, 30)));
-                    $meet['city'] = utf8_encode(trim(substr($data, 85, 20)));
-                    $meet['state'] = trim(substr($data, 106, 2));
-                    $meet['country'] = trim(substr($data, 117, 3));
-                    $meet['start'] = $this->extract_date(trim(substr($data, 121, 8)));
-                    $meet['end'] = $this->extract_date(trim(substr($data, 129, 8)));
-                    $meet['course'] = $this->decode_course(trim(substr($data, 149, 1)));
+                    $meet = new Meet();
                     
-                    //print $row + 1 . ' - ' . $meet['course'] . "\n";
-                    break;
-                case 'C1': //Club
-                    $club['code'] = utf8_encode(trim(substr($data, 11, 6)));
-                    $club['name'] = utf8_encode(trim(substr($data, 17, 30)));
-                    $club['city'] = utf8_encode(trim(substr($data, 107, 20)));
-                    $club['state'] = trim(substr($data, 127,2));
-                    $club['country'] = trim(substr($data, 139,3));
-                    
-                    //If club code is absent, adding the country code instead
-                    if (empty($club['code'])) $club['code'] = $club['country'];
-                    
-                    $clubs[] = $club;
-                    //print $row + 1 . ' - ' . $club['state'] . "\n";
-                    break;
-                case 'D0': //Event
-                    $event['swimmers'][0] = $this->parse_name(utf8_encode(trim(substr($data, 11, 28))));
-                    $event['swimmers'][0]['dob'] = $this->extract_date(trim(substr($data, 55, 8)));
-                    $event['swimmers'][0]['gender'] = trim(substr($data, 65, 1));
-                    $event['swimmers'][0]['club'] = end($clubs);
-                    $event['gender'] = trim(substr($data, 66, 1));
-                    $event['distance'] = trim(substr($data, 67, 4));
-                    $event['stroke'] = $this->decode_stroke(trim(substr($data, 71, 1)));
-                    $event['age_group'] = $this->parse_age_group(trim(substr($data, 76, 4)));
-                    $event['date'] = $this->extract_date(trim(substr($data, 80,8)));
-                    
-                    $event['time'] = trim(substr($data, 115, 8));   //Using finals time
-                    $event['time_in_seconds'] = $this->parse_time($event['time']);
-                    
-                    $event['course'] = $this->decode_course(trim(substr($data, 123, 1)));   //Using course for finals time
-                    
-                    $event['place'] = trim(substr($data, 135, 3));  //Using finals place ranking
-                    
-                    $event['splits'] = [];  //Will be filled later
-                    
-                    $events[] = $event;
-                    
-                    //print $this->pretty_print_entry($event);
+                    $meet->setName($this->extract($data, 12, 30));
+                    $meet->setAddress1($this->extract($data, 42, 22));
+                    $meet->setAddress2($this->extract($data, 64, 22));
+                    $meet->setCity($this->extract($data, 86, 20));
+                    $meet->setState($this->extract($data, 106, 2));
+                    $meet->setPostalCode($this->extract($data, 108, 10));
+                    $meet->setCountry($this->extract($data, 118, 3), $defaultCountry);
+                    $meet->setTypeCode($this->extract($data, 121, 1));
+                    $meet->setStartDate($this->extract($data, 122, 8));
+                    $meet->setEndDate($this->extract($data, 130, 8));
+                    $meet->setAltitude($this->extract($data, 138, 4));
+                    $meet->setCourse($this->extract($data, 150, 1));
                     break;
                     
+                case 'B2': //Meet Host
+                    $meet->setHost($this->extract($data, 12, 30));
+                    $meet->setHostAddress1($this->extract($data, 42, 22));
+                    $meet->setHostAddress2($this->extract($data, 64, 22));
+                    $meet->setHostPhone($this->extract($data, 121, 12));
+                    
+                    //$parsedFile->setMeet($meet);
+                    break;
+                    
+                case 'C1': //Team ID
+                    /*
+                     * Adding last $team before creating a new one since it is only at that point,
+                     * that $team would be fully populated with all its swimmers.
+                     */
+                    if (isset($team)) {
+                         $meet->addTeam($team, $defaultCountry);
+                     }
+                    $team = new Team();
+                    
+                    $team->setName($this->extract($data, 18, 30));
+                    $team->setShortName($this->extract($data, 48, 16));
+                    $team->setAddress1($this->extract($data, 64, 22));
+                    $team->setAddress2($this->extract($data, 86, 22));
+                    $team->setCity($this->extract($data, 108, 20));
+                    $team->setState($this->extract($data, 128, 2));
+                    $team->setPostalCode($this->extract($data, 130, 10));
+                    $team->setCountry($this->extract($data, 140, 3), $defaultCountry);
+                    $team->setRegion($this->extract($data, 143, 1));
+                    
+                    //Doing this one last so we can create a code from team name above info when it is missing
+                    $team->setCode($this->extract($data, 12, 6));
+                    
+                    break;
+                    
+                case 'C2':  //Team Entry
+                    /*
+                     * IGNORED
+                     * 
+                     * One per swimmer. A swimmer with multiple DO records will have one D3 record following
+                     * his/her first D0 record. Contains additional information that is not included in
+                     * pre version 3 SDI formats
+                     */
+                    
+                    /*
+                    $ussNum = $this->extract($data, 3, 14);
+                    $preferredFirstName = $this->extract($data, 17, 15);
+                    $ethnicityCode = $this->extract($data, 32, 2);
+                    $juniorHighSchool = $this->extract($data, 34, 1);
+                    $seniorHighSchool = $this->extract($data, 35, 1);
+                    $ymca = $this->extract($data, 36, 1);
+                    $college = $this->extract($data, 37, 1);
+                    $summerSwimLeague = $this->extract($data, 38, 1);
+                    $masters = $this->extract($data, 39, 1);
+                    $disabled = $this->extract($data, 40, 1);
+                    $waterPolo = $this->extract($data, 41, 1);
+                    $none = $this->extract($data, 42, 1);
+                    */
+                    
+                    break;
+                    
+                case 'D0': //Individual Event
+                    /*
+                     * Adding last $timeEntry before creating a new one since it is only at that point,
+                     * that $timeEntry would be fully populated with all the splits.
+                     */ 
+                    if (isset($timeEntry)) {
+                        $meet->appendTimeEntry($timeEntry);
+                    }
+                    
+                    $swimmer = new Swimmer();
+                    $timeEntry = new TimeEntry();
+                    
+                    //print 'D0 - Name: ' . $this->extract($data, 12, 28) . "\tDOB: " . $this->extract($data, 56, 8) . "\n";
+                    $swimmer->setName($this->extract($data, 12, 28));
+                    $swimmer->setUssNo($this->extract($data, 40, 12));
+                    $swimmer->setAttachCode($this->extract($data, 52, 1));
+                    $swimmer->setCitizenCode($this->extract($data, 53, 3));
+                    $swimmer->setDob($this->extract($data, 56, 8));
+                    $swimmer->setAge($this->extract($data, 64, 2));
+                    $swimmer->setGender($this->extract($data, 66, 1));
+                    
+                    $swimmer->setTeamCode($team->getCode());
+                    
+                    //Adding swimmer to team, meet & timeEntry
+                    $team->setSwimmers($swimmer);
+                    $meet->setSwimmers($swimmer);
+                    $timeEntry->setSwimmers($swimmer);
+                    
+                    //print 'D0 - ' . json_encode($swimmer) . "\n";
+                    
+                    //Grabbing existing event so we can append to it OR getting a new event
+                    $distance = $this->extract($data, 68, 4);
+                    $stroke = $this->extract($data, 72, 1);
+                    $course = $this->extract($data, 124, 1);
+                    $event = $meet->getOrCreateEventBy($distance, $stroke, $course);
+                    
+                    $event->setNumber($this->extract($data, 73, 4));
+                    $event->setDate($this->extract($data, 81, 8));
+                    
+                    $timeEntry->setEventName($event->getName());
+                    $timeEntry->setGender($this->extract($data, 67, 1));
+                    $timeEntry->setAgeGroup($this->extract($data, 77, 4));
+                    $timeEntry->setDate($this->extract($data, 81, 8));
+                    $timeEntry->setSeedTime($this->extract($data, 89, 8));
+                    $timeEntry->setSeedCourse($this->extract($data, 97, 1));
+                    $timeEntry->setPrelimTime($this->extract($data, 98, 8));
+                    $timeEntry->setPrelimCourse($this->extract($data, 106, 1));
+                    $timeEntry->setSwimOffTime($this->extract($data, 107, 8));
+                    $timeEntry->setSwimOffCourse($this->extract($data, 115, 1));
+                    $timeEntry->setFinalsTime($this->extract($data, 116, 8));
+                    $timeEntry->setFinalsCourse($this->extract($data, 124, 1));
+                    $timeEntry->setPrelimHeat($this->extract($data, 125, 2));
+                    $timeEntry->setPrelimLane($this->extract($data, 127, 2));
+                    $timeEntry->setFinalsHeat($this->extract($data, 129, 2));
+                    $timeEntry->setFinalsLane($this->extract($data, 131, 2));
+                    $timeEntry->setPrelimPlace($this->extract($data, 133, 3));
+                    $timeEntry->setFinalsPlace($this->extract($data, 136, 3));
+                    $timeEntry->setPoints($this->extract($data, 139, 4));
+                    $timeEntry->setTimeClassCode($this->extract($data, 143, 2));
+                    $timeEntry->setFlightStatus($this->extract($data, 145, 1));
+
+                    //$meet->setTeams($team);
+                    
+                    //print "\n" . $event->getName() . ' number: ' . $event->getNumber() . "\n";
+                    
+                    break;
+                
                 case 'E0':  //Relay Event
-                    //FIXME - create an array of clubs with code as key
-                    $club_code = utf8_encode(trim(substr($data, 12, 6)));
-                    
-                    $event['swimmers'] = [];
-                    
-                    $event['gender'] = trim(substr($data, 20, 1));
-                    $event['distance'] = trim(substr($data, 21, 4));
-                    $event['stroke'] = $this->decode_stroke(trim(substr($data, 25, 1)));
-                    $event['age_group'] = $this->parse_age_group(trim(substr($data, 30, 4)));
-                    $event['date'] = $this->extract_date(trim(substr($data, 37,8)));
-                    
-                    $event['time'] = trim(substr($data, 72, 8));   //Using finals time
-                    $event['time_in_seconds'] = $this->parse_time($event['time']);
-                    
-                    $event['course'] = $this->decode_course(trim(substr($data, 80, 1)));   //Using course for finals time
-                    
-                    $event['place'] = trim(substr($data, 92, 3));  //Using finals place ranking
-                    
-                    $event['splits'] = [];  //Will be filled later
-                    
-                    //print $this->pretty_print_entry($event);
-                    print var_dump($event);
-                    break;
-                    
+                    /*
+                     * Adding last $timeEntry before creating a new one since it is only at that point,
+                     * that $timeEntry would be fully populated with all the splits.
+                     */
+                     if (isset($timeEntry)) {
+                         $meet->appendTimeEntry($timeEntry);
+                     }
+                     
+                     $timeEntry = new TimeEntry();
+                     
+                     //Grabbing existing event so we can append to it OR getting a new event
+                     $distance = $this->extract($data, 22, 4);
+                     $stroke = $this->extract($data, 26, 1);
+                     $course = $this->extract($data, 81, 1);
+                     $event = $meet->getOrCreateEventBy($distance, $stroke, $course);
+                     
+                     $event->setNumber($this->extract($data, 27, 4));
+                     $event->setDate($this->extract($data, 38, 8));
+                     
+                     $timeEntry->setEventName($event->getName());
+                     $timeEntry->setGender($this->extract($data, 21, 1));
+                     $timeEntry->setAgeGroup($this->extract($data, 31, 4));
+                     
+                     $timeEntry->setRelayTeamAge($this->extract($data, 35, 3));
+                     
+                     $timeEntry->setDate($this->extract($data, 38, 8));
+                     $timeEntry->setSeedTime($this->extract($data, 46, 8));
+                     
+                     $timeEntry->setSeedCourse($this->extract($data, 54, 1));
+                     $timeEntry->setPrelimTime($this->extract($data, 55, 8));
+                     $timeEntry->setPrelimCourse($this->extract($data, 63, 1));
+                     $timeEntry->setSwimOffTime($this->extract($data, 64, 8));
+                     $timeEntry->setSwimOffCourse($this->extract($data, 72, 1));
+                     $timeEntry->setFinalsTime($this->extract($data, 73, 8));
+                     $timeEntry->setFinalsCourse($this->extract($data, 81, 1));
+                     $timeEntry->setPrelimHeat($this->extract($data, 82, 2));
+                     $timeEntry->setPrelimLane($this->extract($data, 84, 2));
+                     $timeEntry->setFinalsHeat($this->extract($data, 86, 2));
+                     $timeEntry->setFinalsLane($this->extract($data, 88, 2));
+                     $timeEntry->setPrelimPlace($this->extract($data, 90, 3));
+                     $timeEntry->setFinalsPlace($this->extract($data, 93, 3));
+                     $timeEntry->setPoints($this->extract($data, 96, 4));
+                     $timeEntry->setTimeClassCode($this->extract($data, 100, 2));
+                     //$timeEntry->setFlightStatus($this->extract($data, 145, 1));      //Not used for relays
+                     
+                     //Temporary
+                     //$event->setTimeEntries($timeEntry);
+                     
+                     //print json_encode($timeEntry) . "\n";
+                     
+                     break;
+
                 case 'F0':  //Relay Swimmers
-                    //FIXME - to be developed once an sd3 example is provided
-                    //FIXME fetch the club
                     
+                    //print 'F0 - Name: ' . $this->extract($data, 23, 28) . "\tDOB: " . $this->extract($data, 66, 8) . "\n";
                     
+                    $swimmer = new Swimmer();
+                    $swimmer->setName($this->extract($data, 23, 28));
+                    $swimmer->setUssNo($this->extract($data, 51, 12));
+                    //$swimmer->setAttachCode($this->extract($data, 52, 1));
+                    $swimmer->setCitizenCode($this->extract($data, 63, 3));
+                    $swimmer->setDob($this->extract($data, 66, 8));
+                    $swimmer->setAge($this->extract($data, 74, 2));
+                    $swimmer->setGender($this->extract($data, 76, 1));
+                    
+                    $swimmer->setTeamCode($team->getCode());
+                    
+                    //Adding swimmer to team, meet & timeEntry
+                    $team->setSwimmers($swimmer);
+                    $meet->setSwimmers($swimmer);
+                    $timeEntry->setSwimmers($swimmer);
+
+                    //print 'F0 - ' . json_encode($swimmer) . "\n";
                     
                     break;
+                
                 case 'G0': //Splits
+
+                    //break;      //DEBUG
                     
-                    $lastEventKey = array_key_last($events);
+                    $sequence = $this->extract($data, 56, 1);   //sequence number to order multiple splits records for one athlete and one event
+                    $distance = $this->extract($data, 59, 4);
+                    $code = $this->extract($data, 63, 1);       //Splits can either be cumulative (C) or interval (I)
                     
-                    $swimmer = $this->parse_name(utf8_encode(trim(substr($data, 15, 28))));
-                    $sequence = trim(substr($data, 55, 1));    //sequence number to order multiple splits records for one athlete and one event
-                    $split_count = trim(substr($data, 56, 2)); //total number of splits for this event
-                    $distance = trim(substr($data, 58, 4));
-                    $code = trim(substr($data, 62, 1)); //Splits can either be cumulative or interval
+                    $timeIndices = [
+                        1 => 64,
+                        2 => 72,
+                        3 => 80,
+                        4 => 88,
+                        5 => 96,
+                        6 => 104,
+                        7 => 112,
+                        8 => 120,
+                        9 => 128,
+                        10 => 136
+                    ];
                     
-                    $time_indices = [63, 71, 79, 87, 95, 103, 111, 119, 127, 135];
+                    //Index adjustment to count properly the split we are currently in
+                    $adj = ($sequence * 10) - 10;
                     
-                    $adj = ($sequence * 10) - 10;   //Index adjustment to count properly the split we are currently in
-                    
-                    foreach ($time_indices as $k => $i) {
+                    foreach ($timeIndices as $i => $timeIndex) {
                         
-                        if ($sequence == 1 & $k == 0) {
-                            $previous_cum_time = 0.0; //Need to initialize on first split we encounter
-                        } else {
-                            //For subsequent splits in the series, we grab the value of the last split on the event array
-                            $lastSplitKey = array_key_last($events[$lastEventKey]['splits']);
-                            $previous_cum_time = $events[$lastEventKey]['splits'][$lastSplitKey]['cumulative_time_in_seconds'];
-                        }
+                        $previousCumTime = $timeEntry->getLastSplitTime();
                         
-                        $split['swimmer'] = $swimmer;
-                        $split['sequence'] = $sequence;
-                        $split['split_count'] = $split_count;
+                        $time = $this->extract($data, $timeIndex, 8);
                         
-                        $split['distance'] = $distance * ($k + 1 + $adj);
-                        $split['code'] = $code;
-                        $split['time'] = trim(substr($data, $i, 8));
-                        
-                        switch ($code) {
-                            case 'C':   //Cumulative Splits
-                                $split['cumulative_time_in_seconds'] = $this->parse_time($split['time']);
-                                $split['interval_time_in_seconds'] = $split['cumulative_time_in_seconds'] - $previous_cum_time;
-                                break;
-                            case 'I':   //Interval Splits
-                                $split['interval_time_in_seconds'] = $this->parse_time($split['time']);
-                                $split['cumulative_time_in_seconds'] = $previous_cum_time + $split['interval_time_in_seconds'];
-                                break;
-                        }
-                        
-                        //Adding to last event
-                        if (!empty($split['time'])) {
-                            $events[$lastEventKey]['splits'][] = $split;
+                        if (!empty($time)) {
+                            $split = new Split();
+                            $split->setDistance($distance * ($i + $adj));
+                            $split->setSplitType($this->extract($data, 144, 1));
+                            
+                            $split->setSwimmer($swimmer);
+                            
+                            $timeRaw = $this->extract($data, $timeIndex, 8);
+                            $split->setTimeCode($time);
+                            
+                            //FIXME - Need to ensure that this works for relays!
+                            $split->setSwimmer($swimmer);
+                            
+                            $time = $this->parseTime($timeRaw);
+                            
+                            switch ($code) {
+                                case 'C':   //Cumulative Splits
+                                    $split->setCumulativeTime($time);
+                                    $split->setIntervalTime($time - $previousCumTime);
+                                    break;
+                                case 'I':   //Interval Splits
+                                    $split->setIntervalTime($time);
+                                    $split->setCumulativeTime($previousCumTime + $time);
+                                    break;
+                            }
+                            
+                            //print json_encode($split) . "\n";
+                            
+                            $timeEntry->setSplits($split);
                         }
                         
                     }
+                    //print json_encode($timeEntry, JSON_PRETTY_PRINT) . "\n\n";
                     break;
-                    
-                    //print var_dump($split);
-                  */
+                case 'Z0':  //File terminator
+                    $parsedFile->setMeet($meet);
+                    break;
+                  
             }
         }
-        /*
-         foreach ($events as $e => $d) {
-         print $this->pretty_print_entry($d);
-         }
-         */
         
         return $parsedFile;
     }
     
+    /**
+     * 
+     * Function to enable extracting data using the start indices straight from the sd3 spec
+     * 
+     * @param string $data
+     * @param int $start
+     * @param int $length
+     * @return string
+     */
     private function extract(string $data, int $start, int $length) {
         return trim(substr($data, $start - 1, $length));
     }
