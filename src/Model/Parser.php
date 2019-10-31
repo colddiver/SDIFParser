@@ -259,8 +259,6 @@ class Parser
                     break;
                 
                 case 'G0': //Splits
-
-                    //break;      //DEBUG
                     
                     $sequence = $this->extract($data, 56, 1);   //sequence number to order multiple splits records for one athlete and one event
                     $distance = $this->extract($data, 59, 4);
