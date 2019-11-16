@@ -1,0 +1,71 @@
+HY-TEK Meet Manager CL2 and HY3 File Checksum Algorithms
+--------------------------------------------------------
+HY3 File Checksum:
+
+We start with this line from an HY3 file:
+
+E1M 8138AnackMB   200E 11 12  0S  4.00  4A  171.37Y  171.37Y
+0.00    0.00   NN               N                               40
+
+We take ONLY columns 1-129 since columns 130-131 contain the checksum
+value:
+
+E1M 8138AnackMB   200E 11 12  0S  4.00  4A  171.37Y  171.37Y
+0.00    0.00   NN               N                               |
+
+We take and split the line into two different parts, part one is the
+ODD numbered columns 1, 3, 5, 7... (I added the | to mark the end):
+EM83AakB 20 11 0 40 4 113Y 7.7  00  00  N       N               |
+
+We simple SUM the values here...  For this string we get a checksum of
+0x0B1E (done in HEX for clarity)
+
+And part two has the EVEN numbered columns 2, 4, 6, ...:
+1 18ncM  0E1 2 S .0 A 7.7 113Y  .0  .0 N                        |
+
+Here, we sum each of the values but multiply each by two before
+summing...  So we get a checksum of 0x15AC for thsi one.
+
+Next we SUM both checksums:
+
+0x0B1E + 0x15AC = 0x20CA
+
+Then divide by 21 (decimal):
+
+0x20CA -> 8394/21 = 399.71 but we just take the whole number part so
+this is 399
+
+Then add 205 to this result:
+
+399 + 205 = 604
+
+From this we take the last two digits backwards which is: 40  !!
+
+-------------------------------------------------------------------------------------------------------------
+
+CL2 File Checksum:
+
+From a CL2 file we use a test line such as:
+
+A01V3      02Meet Results                  Hy-Tek, Ltd         WMM
+3.0Cl Hy-Tek, Ltd
+866-456-511112052009                                    MM40    N42
+
+The checksum is contained in the last 4 columns (i.e. 157-160) and in
+this case is " N42".
+
+Here we calculate the checksum of the columns 1-156.  For this example
+we get 7861 or 0x1EB5.
+
+Divide that result by 19 to get 413.  Then add 211 to that result to
+get 624.
+
+Again we take the last two characters backward.  In this case the
+result is: 42.
+
+The start of the checksum is either " N" or "NN" and this is
+determined by the FIRST 2 CHARACTERs of the line.  If the line
+starts with "D0" we use "NN".  Otherwise we use " N".
+
+So this example line has a checksum value of " N42" according to this
+algorithm.

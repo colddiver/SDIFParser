@@ -93,7 +93,7 @@ class Team implements JsonSerializable
     }
     
     public function getCountry(): string {
-        return $this->country;
+        return "$this->country";
     }
     
     public function setCountry(string $value, string $defaultCountry) {

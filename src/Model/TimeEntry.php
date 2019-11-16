@@ -48,6 +48,9 @@ class TimeEntry implements JsonSerializable
     
     public function setEventName(string $value) {
         $this->eventName = $value;
+        if (strpos($value, 'Relay') !==0) {
+            $this->isRelay = true;
+        }
     }
     
     public function getGender(): string {
@@ -64,6 +67,10 @@ class TimeEntry implements JsonSerializable
     
     public function setAgeGroup(string $value) {
         $this->ageGroup = $this->parseAgeGroup($value);
+    }
+    
+    public function setAgeGroupFromSwimmerAge(string $value) {
+        $this->ageGroup = $this->inferAgeGroup(intval($value));
     }
     
     public function getDate(string $format = 'Y-m-d'): string {

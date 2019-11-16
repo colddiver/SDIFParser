@@ -15,11 +15,14 @@ class Swimmer implements JsonSerializable
     private $attachCode;
     private $citizenCode;
     private $dob;
+    private $yob;
     private $age;
     private $gender;
     private $teamCode;
     
     public function getName(): string {
+        
+        if (empty($this->name)) return sprintf('%s, %s', $this->lastName, $this->firstName);
         return $this->name;
     }
     
@@ -36,8 +39,20 @@ class Swimmer implements JsonSerializable
         return $this->firstName;
     }
     
+    public function setFirstName(string $value) {
+        $this->firstName = utf8_encode($value);
+    }
+    
     public function getLastName(): string {
         return $this->lastName;
+    }
+    
+    public function setLastName(string $value) {
+        $this->lastName = utf8_encode($value);
+    }
+    
+    public function getFullName(): string {
+        return sprintf('%s %s', $this->firstName, $this->lastName);
     }
 
     public function getUssNo(): string {
@@ -77,14 +92,22 @@ class Swimmer implements JsonSerializable
         
         //Some records have no DOB - only an age
         if (isset($value)) $this->dob = DateTime::createFromFormat('mdY', $value);
+        
     }
     
-    public function getAge(): string {
+    public function getAge(): int {
         return $this->age;
     }
     
-    public function setAge(string $value) {
-        $this->age = $value;
+    public function setAge(string $value, string $meetYear) {
+        if (isset($value)) {
+            $this->age = intval($value);
+            $this->yob = intval($meetYear) - $this->age;
+        } else {
+            $this->yob = intval($this->getDob('Y'));
+            $this->age = intval($meetYear) - $this->yob;
+        }
+        
     }
     
     public function getGender(): string {
@@ -110,13 +133,14 @@ class Swimmer implements JsonSerializable
     public function jsonSerialize() {
         return [
             'id' => $this->getId(),
-            'name' => $this->name,
+            'name' => $this->getName(),
             'firstName' => $this->firstName,
             'lastName' => $this->lastName,
             'ussNo' => $this->ussNo,
             'attachCode' => $this->attachCode,
             'citizenCode' => $this->citizenCode,
             'dob' => $this->getDob(),
+            'yob' => $this->yob,
             'age' => $this->age,
             'gender' => $this->gender,
             'teamCode' => $this->teamCode

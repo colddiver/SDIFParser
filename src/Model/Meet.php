@@ -32,6 +32,8 @@ class Meet implements JsonSerializable
     private $events = [];
     
     public function getName(): string {
+        
+        if (empty($this->name)) return 'N/A';
         return $this->name;
     }
     
@@ -56,6 +58,7 @@ class Meet implements JsonSerializable
     }
     
     public function getCity(): string {
+        if (empty($this->city)) return 'N/A';
         return $this->city;
     }
     
@@ -64,6 +67,7 @@ class Meet implements JsonSerializable
     }
     
     public function getState(): string {
+        if (empty($this->state)) return 'N/A';
         return $this->state;
     }
     
@@ -80,15 +84,16 @@ class Meet implements JsonSerializable
     }
     
     public function getCountry(): string {
+        if (empty($this->country)) return 'N/A';
         return $this->country;
     }
     
     public function setCountry(string $value, string $defaultCountry) {
         
         if (empty($value)) {
-            $this->country = $defaultCountry;
+            $this->country = strtoupper($defaultCountry);
         } else {
-            $this->country = $value;
+            $this->country = strtoupper($value);
         }
     }
     
@@ -154,7 +159,14 @@ class Meet implements JsonSerializable
     }
     
     public function getStartDate(string $format = 'Y-m-d'): string {
-        return date_format($this->startDate, $format);
+        
+        // Some meet files have no start date
+        if (empty($this->startDate)) {
+            return 'N/A';
+        } else {
+            return date_format($this->startDate, $format);
+        }
+        
     }
     
     public function setStartDate(string $value) {
@@ -162,11 +174,21 @@ class Meet implements JsonSerializable
     }
     
     public function getEndDate(string $format = 'Y-m-d'): string {
-        return date_format($this->endDate, $format);
+        // Some meet files have no end date
+        if (empty($this->startDate)) {
+            return 'N/A';
+        } else {
+            return date_format($this->endDate, $format);
+        }
     }
     
     public function setEndDate(string $value) {
         $this->endDate = DateTime::createFromFormat('mdY', $value);
+        
+        //When a start date does not exist, using end date as start date
+        if ($this->startDate === false) {
+            $this->startDate = $this->endDate;
+        }
     }
     
     /**
@@ -256,6 +278,12 @@ class Meet implements JsonSerializable
     public function getTeams(): array {
         return $this->teams;
     }
+    
+    public function getTeamCount(): int {
+        
+        
+        return count(array_keys($this->teams));
+    }
 
     //Should no longer be used
     /*public function setTeams(Team $value) {
@@ -265,12 +293,16 @@ class Meet implements JsonSerializable
     }*/
     
     public function getSwimmers(): array {
-        return $this->swimmers;
+        return count(array_keys($this->swimmers));
     }
     
     public function setSwimmers(Swimmer $value) {
         $key = $value->getId();
         $this->swimmers[$key] = $value;
+    }
+    
+    public function getSwimmerCount(): int {
+        return count($this->swimmers);
     }
     /*
     public function getEventByNumber(string $number): Event {
@@ -316,6 +348,10 @@ class Meet implements JsonSerializable
         return $this->events;
     }
     
+    public function getEventCount(): int {
+        return count($this->events);
+    }
+    
     public function setEvents(Event $value) {
         
         //array_splice($this->events, $value->getNumber(), 0, [$value]);
@@ -325,7 +361,7 @@ class Meet implements JsonSerializable
     }
     
     public function appendTimeEntry(TimeEntry $entry) {
-        $event =& $this->getEventByName($entry->getEventName());
+        $event = $this->getEventByName($entry->getEventName());
         $event->setTimeEntries($entry);
         
         //Is PHP pointing to original object or creating a new variable?

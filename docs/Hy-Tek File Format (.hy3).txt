@@ -1,0 +1,459 @@
+// Each line in Hy-Tek is 130 characters long with the last 2 being a checksum.
+// The first 2 characters of each line describe the format for the rest of the
+// the line.  The "A1" code is important as it provides information about the
+// type of file.
+//
+// A107...
+// \/\/\__...
+// | |          The A1 line also provides information about when the file was
+// | |          generated, the Hy-Tek version, who the software is register to.
+// | |
+// | |
+// | +--File type (02 = Meet Entries)
+// |              (07 = Results From MM to TM)
+// +----Line code (A1 = File Descriptor)
+//                (B1 = Meet Information)
+//                (B2 = Meet Address)
+//                (B3 = Meet Contact)
+//                (C1 = Swim Team Name Information)
+//                (C2 = Swim Team Address Information)
+//                (C3 = Swim Team Contact Information)
+//                (D1 = Swimmer Information)
+//                (D2 = Swimmer Information)  Used for address and contact information phone nubmers, etc...
+//                (D3 = Swimmer Information)
+//                (D4 = Swimmer Information)
+//                (D5 = Swimmer Information)
+//                (E1 = Individual Event Entry Information)
+//                (E2 = Individual Event Results)
+//                (F1 = Relay Event Entry Information)
+//                (F2 = Relay Event Results)
+//                (G  = Split Times)
+//                (H1 = DQ Description)
+//
+//
+
+//*************************************************************************************************************************************
+// Meet Information
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// B1MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDEEEEE       NN
+//  \____________________________________________/\___________________________________________/\______/\______/\______/\___/???????\/
+//           Meet Name [45]                             Meet Facility [45]                       |       |      |      |        Checksum
+//                                                                                               |       |      |      +-- Elevation [5]
+//                                                                                               |       |      +-- Age Up Date [8]
+//                                                                                               |       +-- Meet End [8]
+//                                                                                               +-- Meet Start [8]
+//
+//   [  0:1  ]  Line ID - Must be B1
+//   [  2:46 ]  Meet Name
+//   [ 47:91 ]  Meet Facility
+//   [ 92:99 ]  Meet Start Date (MMDDYYYY)
+//   [100:107]  Meet End Date (MMDDYYYY)
+//   [108:115]  Age Up Date (MMDDYYYY)
+//   [116:120]  Elevation
+//   [128:129]  Checksum
+//
+//
+
+//*************************************************************************************************************************************
+// Meet Information
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// B2????????????????????????????????????????????????????????????????????????????????????????????DDTTC???????C?????????????????????NN
+//  \___________________________________________________________________________________________/\/\/|\_____/|\___________________/\/
+//           Unknown [91]                                                                        | | |       |                Checksum
+//                                                                                               | | |       |
+//                                                                                               | | |       +-- Course Code [1]
+//                                                                                               | | |
+//                                                                                               | | +-- Course Code [1]
+//                                                                                               | +-- Meet Type [2]
+//                                                                                               +-- Masters[2]
+//
+//   [  0:1  ]  Line ID - Must be B2
+//   [  2:93 ]  Unknown
+//   [ 94:95 ]  Masters (06 = Masters)
+//   [ 96:97 ]  Meet Type (08, AG, US, SR)
+//   [ 98:98 ]  Course Code (L = Long Course, S = Short Course, Y = Yards)
+//   [106:106]  Course Code (L = Long Course, S = Short Course, Y = Yards)
+//   [128:129]  Checksum
+//
+//
+//
+
+//*************************************************************************************************************************************
+// Swim Team Name Information
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// C1AAAAAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFSSSSSSSSSSSSSSSSLL                                                                TTT      81
+//   \___/\____________________________/\______________/\/????????????????????????????????????????????????????????????????\_/??????\/
+//     |      Full Team Name             Short Team Name |                                                                 |     Checksum
+//     +--Team Abbreviation [5]                          |                                                             Team Type
+//                                               USA Swimming LSC
+//                                      (Local Swimming Communities & Zones)
+//
+// Team Type [3] (From Hy-Tek Team Manager)
+//   AGE  Age Group
+//   HS   High School
+//   COL  College
+//   MAS  Masters
+//   OTH  Other
+//   REC  Recreation
+//
+//
+
+//*************************************************************************************************************************************
+// Swim Team Address Information
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// C2TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCCCCCCCCCCCCCCCSSZZZZZZZZZZCCC RRRR                21
+//   \____________________________/\____________________________/\____________________________/\/\________/\_/?\__/????????????????\/
+//               Mail To [30]              Address [30]                  City [30]              | Zip [10]  |    |              Checksum
+//                                                                                              |           |    +--Team Registration[4]
+//                                                                                              +--State[2] +--Country[3]
+//
+// Team Registration [4] (From Hy-Tek Team Manager)
+//   AUST  Austrailia
+//   BCSS  Canada (BCSSA)
+//   NZSF  New Zealand
+//   OTH   Other
+//   SSA   South Africa
+//   UK    United Kingdom
+//   USS   USA Swimming
+//
+//
+
+
+
+//*************************************************************************************************************************************
+// Swim Team Address Information
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// C3                              DDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEFFFFFFFFFFFFFFFFFFFFMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM70
+//   ??????????????????????????????\__________________/\__________________/\__________________/\__________________________________/\/
+//                                 Daytime Phone #[20] Evening Phone #[20]    Fax # [20]               Email Address [36]       Checksum
+//
+//
+//
+//
+
+//*************************************************************************************************************************************
+//  Swimmer Entry
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// D1M   12Bybee               Cody                                    A                   07121999 11                             56
+// D1F  769Azbill              Millicent           Miley               C                68012192001  6     0                       62
+// D1F14081Reed                Laramie                                 J021100LARJREED 101902112000  9     0                       11
+// \/|\___/\__________________/\__________________/\__________________/|\____________/\___/\______/?\/?????????????????????????????\/
+// | |  |    Last Name [20]      First Name [20]     Nick Name [20]    |       |        |   DOB[8]  |                           Checksum
+// | |  |                                                              |       |        |           +--Age
+// | |  +--Swimmer ID [5] (from event database)                      M.I.[1]   |        +--Swimmer ID [5] (from team database)
+// | +-----Swimmer Gender [1]                                                  |
+// +-------Line code [2] (D1 = Swimmer Entry)                                  +-- USSNUM [14] [MMDDYY][Frist(3)][M.I.][Last(4)]
+//
+//  The USSNUM is made up from the Date of Birth using the MMDDYY format. Then
+//  the first three characters of the last name the middle initial and then the
+//  the last four characters of the last name.  If there is no middle initial
+//  or the name is shorter than the required characters the blank space is
+//  filled with an "*".  Special characters are removed.
+//  (From SDIF v3f)
+//  Examples: Catherine A. Durance = 011553CATADURA
+//    Cy V. Young          = 091879CY*VYOUN
+//    Thomas Chu           = 020981THO*CHU*
+//    Ty Lee               = 011873TY**
+//
+//   [  0:1  ]  Line ID
+//   [  2    ]  Swimmer Gender
+//   [  3:7  ]  Swimmer Id
+//   [  8:27 ]  Swimmer LastName
+//   [ 28:47 ]  Swimmer FirstName
+//   [ 48:67 ]  Swimmer NickName
+//   [ 68    ]  Swimmer MiddleInitial
+//   [ 88:95 ]  Swimmer Birth
+//   [ 97:98 ]  Swimmer Age
+//   [128:129]  Checksum
+//
+//
+//
+
+//*************************************************************************************************************************************
+// Event Entry
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// E1M   12BybeeMM   100E 11 12      3.50202??      0Y?  81.24Y????????????????????????????????????????????????????????????????????07
+// \/|\___/\___/||??\__/|\_/\_/????\____/\_/  \_____/| \_____/|                                                                    \/
+// | |  |    |  ||   |  | |  |        |   |      |   |    |   |                                                                  Checksum
+// | |  |    |  ||   |  | |  |        |   |      |   |    |   |
+// | |  |    |  ||   |  | |  |        |   |      |   |    |   +--Seed Unit 2
+// | |  |    |  ||   |  | |  |        |   |      |   |    +------Seed Time 2
+// | |  |    |  ||   |  | |  |        |   |      |   +-----------Seed Unit 1
+// | |  |    |  ||   |  | |  |        |   |      +---------------Seed Time 1
+// | |  |    |  ||   |  | |  |        |   +----------------------Event Number
+// | |  |    |  ||   |  | |  |        +--------------------------Event Fee
+// | |  |    |  ||   |  | |  +-----------------------------------Age Upper
+// | |  |    |  ||   |  | +--------------------------------------Age Lower
+// | |  |    |  ||   |  +----------------------------------------Stroke
+// | |  |    |  ||   +-------------------------------------------Distance
+// | |  |    |  |+-----------------------------------------------Gender 2
+// | |  |    |  +------------------------------------------------Gender 1
+// | |  |    +---------------------------------------------------Last
+// | |  +--------------------------------------------------------Swimmer ID (from team database)
+// | +-----------------------------------------------------------Swimmer Gender
+// +-------------------------------------------------------------Line code (E2 = Event Entry)
+//
+//
+//   [  0:1  ]  Line ID
+//   [  2    ]  Swimmer Gender  (M=Male,F=Female)
+//   [  3:7  ]  Swimmer Id
+//   [  8:12 ]  Swimmer Abbr    (First five digits of the last name)
+//   [ 13    ]  Gender1         (M=Male,F=Female)
+//   [ 14    ]  Gender2         (M=Mens, B=Boys, F=Womens, G=Girls)
+//   [ 17:20 ]  Distance        (possibly start at 15 or 16)
+//   [ 21    ]  Stroke          (A=Free, B=Back, C=Breast, D=Fly, E=Medley)
+//   [ 22:24 ]  AgeLower        (0=Under)  \
+//   [ 25:27 ]  AgeUpper        (109=Over) /[  0][109] = Open/Senior
+//   [ 32:37 ]  Event Fee
+//   [ 38:41 ]  Event Number
+//   [ 42:49 ]  Conversion Seed Time 1
+//   [ 50    ]  Conversion Seed Course 1 (L = Long Course, S = Short Course, Y = Yards)
+//   [ 52:58 ]  Seed Time 1
+//   [ 59    ]  Seed Course 1  (L = Long Course, S = Short Course, Y = Yards)
+//   [ 60:67 ]  Conversion Seed Time 2
+//   [ 68    ]  Conversion Seed Course 2 (L = Long Course, S = Short Course, Y = Yards)
+//   [ 69:75 ]  Seed Time 2
+//   [ 76    ]  Seed Course 2 (L = Long Course, S = Short Course, Y = Yards)
+//   [128:129]  Checksum
+//
+
+//*************************************************************************************************************************************
+// Individual Event Results
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// E2F  366.75Y       0  1  4  1   7  0  366.75  366.72    0.00       366.75     0.00                                        0     95
+// \/|\______/|\_/?????\_/\_/\_/\__/???\______/\______/\______/?????\______/?\______/????????????????????\______/??????????????????\/
+// | |    |   | |       |  |  |   |       |        |       |            |        |                           |                   checksum
+// | |    |   | |       |  |  |   |       |        |       |            |        +--Plunger/Touch Pad Time   |
+// | |    |   | |       |  |  |   |       |        |       |            +--Plunger/Touch Pad Time            |
+// | |    |   | |       |  |  |   |       |        |       +--Plunger/Touch Pad Time                         +--Day of event
+// | |    |   | |       |  |  |   |       |        +--Plunger/Touch Pad Time
+// | |    |   | |       |  |  |   |       +--Plunger/Touch Pad Time
+// | |    |   | |       |  |  |   +--Overall Place
+// | |    |   | |       |  |  +--Place in heat
+// | |    |   | |       |  +--Lane
+// | |    |   | |       +--Heat
+// | |    |   | +--Time Code
+// | |    |   +--Length Unit
+// | |    +--Time
+// | +--Event Type
+// +--Line ID
+//
+//
+//   [  0:1  ]  Line ID
+//   [  2    ]  Result Type     (F=Final, P=Prelim)
+//   [  3:10 ]  Time
+//   [ 11    ]  Lenth Unit      (Y=Yard, S=Short Course Meter)
+//   [ 12:14 ]  Time Code       (Q=DQ, R=No Start/Show, ' ' = Normal, 'S' = Scratch (swimmer not swimming in finals), 'F' = False Start)
+//   [ 20:22 ]  Heat
+//   [ 23:25 ]  Lane
+//   [ 26:28 ]  Place in Heat
+//   [ 29:32 ]  Overall Place
+//   [ 36:43 ]  
+//   [ 44:51 ]
+//   [ 52:59 ]
+//   [ 65:72 ]
+//   [ 74:81 ]
+//   [102:109]  Day of the event
+//   [128:129]  Checksum
+//
+//
+//*************************************************************************************************************************************
+// Relay Event Entry
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// F1KZY  A   0FFF   200A 09 10     12.00255        0Y  146.99Y                                                                    36
+// \/\___/|????|||???\_/|\_/\_/????\____/\_/  \_____/| \_____/|????????????????????????????????????????????????????????????????????\/
+// |   |  |    |||    | | |  |       |    |                                                                                      Checksum
+// |   |  |    |||    | | |  |       |    |
+// |   |  |    |||    | | |  |       |    |
+// |   |  |    |||    | | |  |       |    +--Event Number
+// |   |  |    |||    | | |  |       +-------Event Fee
+// |   |  |    |||    | | |  +--Age Upper
+// |   |  |    |||    | | +-----Age Lower
+// |   |  |    |||    | +-------Stroke
+// |   |  |    |||    +---------Distance
+// |   |  |    ||+--------------Relay Gender 2
+// |   |  |    |+---------------Relay Gender 1
+// |   |  |    +----------------Relay Team Gender
+// |   |  +---------------------Relay Team
+// |   +------------------------Team Abbreviation
+// +----------------------------Line ID
+//
+//   [  0:1  ]  Line ID
+//   [  2:6  ]  Team Abbreviation
+//   [  7    ]  Relay Team           (A, B...)
+//   [ 12    ]  Relay Gender         (M=Male,F=Female)
+//   [ 13    ]  Relay Gender1        (M=Male,F=Female)
+//   [ 14    ]  Relay Gender2        (M=Mens, B=Boys, F=Womens, G=Girls)
+//   [ 17:20 ]  Relay Distance
+//   [ 21    ]  Relay Stroke         (A=Free, B=Back, C=Breast, D=Fly, E=Medley)
+//   [ 22:24 ]  Relay Age Lower
+//   [ 25:27 ]  Relay Age Upper
+//   [ 32:37 ]  Event Fee
+//   [ 38:40 ]  Event Number
+//   [ 43:49 ]  Relay Seed Time 1
+//   [ 50    ]  Relay Seed Course 1
+//   [ 52:58 ]  Relay Seed Time 2
+//   [ 59    ]  Relay Seed Course 2
+//   [128:129]  Checksum
+//
+//
+//*************************************************************************************************************************************
+// Relay Event Entry
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// F2F  111.19Y       0  1  3  6  23  0  111.28  111.32    0.00       111.19     0.00 0.00 +0.0 +0.0 +0.003132010            0     38
+// \/|\______/|\_/?????\_/\_/\_/\__/???\______/\______/\______/?????\______/?\______/????????????????????\______/??????????????????\/
+// | |    |   | |       |  |  |   |       |        |       |            |        |                            |                  checksum
+// | |    |   | |       |  |  |   |       |        |       |            |        +--Plunger/Touch Pad Time    |
+// | |    |   | |       |  |  |   |       |        |       |            +--Plunger/Touch Pad Time             +--Day of event
+// | |    |   | |       |  |  |   |       |        |       +--Plunger/Touch Pad Time
+// | |    |   | |       |  |  |   |       |        +--Plunger/Touch Pad Time
+// | |    |   | |       |  |  |   |       +--Plunger/Touch Pad Time
+// | |    |   | |       |  |  |   +--Overall Place
+// | |    |   | |       |  |  +--Place in heat
+// | |    |   | |       |  +--Lane
+// | |    |   | |       +--Heat
+// | |    |   | +--Time Code
+// | |    |   +--Length Unit
+// | |    +--Time
+// | +--Event Type
+// +--Line ID
+//
+//
+//   [  0:1  ]  Line ID
+//   [  2    ]  Result Type     (F=Final, P=Prelim)
+//   [  3:10 ]  Time
+//   [ 11    ]  Lenth Unit      (Y=Yard, S=Short Course Meter)
+//   [ 12:14 ]  Time Code       (Q=DQ, R=No Start/Show, ' ' = Normal, 'S' = Scratch (swimmer not swimming in finals), 'F' = False Start)
+//   [ 20:22 ]  Heat
+//   [ 23:25 ]  Lane
+//   [ 26:28 ]  Place in Heat
+//   [ 29:32 ]  Overall Place
+//   [ 36:43 ]  
+//   [ 44:51 ]
+//   [ 52:59 ]
+//   [ 65:72 ]
+//   [ 74:81 ]
+//   [102:109]  Day of the event
+//   [128:129]  Checksum
+//
+//
+//*************************************************************************************************************************************
+// Relay Event Entry
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// F3GDDDDDAAAAAGNGDDDDDAAAAAGNGDDDDDAAAAAGNGDDDDDAAAAAGN??????????????????????????????????????????????????????????????????????????07
+// \/|\___/\___/|||\___/\___/|||\___/\___/|||\___/\___/||                                                                          \/
+// | |  |    |  |||  |    |  |||  |    |  |||  |    |  ||                                                                      Checksum
+// | |  |    |  |||  |    |  |||  |    |  |||  |    |  |+------------------------------------------ Swimmer 4 Leg
+// | |  |    |  |||  |    |  |||  |    |  |||  |    |  +------------------------------------------- Swimmer 4 Gender
+// | |  |    |  |||  |    |  |||  |    |  |||  |    +---------------------------------------------- Swimmer 4 Abbr
+// | |  |    |  |||  |    |  |||  |    |  |||  +--------------------------------------------------- Swimmer 4 ID (from team database)
+// | |  |    |  |||  |    |  |||  |    |  ||+------------------------------------------------------ Swimmer 4 Gender
+// | |  |    |  |||  |    |  |||  |    |  ||
+// | |  |    |  |||  |    |  |||  |    |  |+------------------------------------------ Swimmer 3 Leg
+// | |  |    |  |||  |    |  |||  |    |  +------------------------------------------- Swimmer 3 Gender
+// | |  |    |  |||  |    |  |||  |    +---------------------------------------------- Swimmer 3 Abbr
+// | |  |    |  |||  |    |  |||  +--------------------------------------------------- Swimmer 3 ID (from team database)
+// | |  |    |  |||  |    |  ||+------------------------------------------------------ Swimmer 3 Gender
+// | |  |    |  |||  |    |  ||
+// | |  |    |  |||  |    |  |+------------------------------------------ Swimmer 2 Leg
+// | |  |    |  |||  |    |  +------------------------------------------- Swimmer 2 Gender
+// | |  |    |  |||  |    +---------------------------------------------- Swimmer 2 Abbr
+// | |  |    |  |||  +--------------------------------------------------- Swimmer 2 ID (from team database)
+// | |  |    |  ||+------------------------------------------------------ Swimmer 2 Gender
+// | |  |    |  |+------------------------------------------ Swimmer 1 Leg
+// | |  |    |  +------------------------------------------- Swimmer 1 Gender
+// | |  |    +---------------------------------------------- Swimmer 1 Abbr
+// | |  +--------------------------------------------------- Swimmer 1 ID (from team database)
+// | +------------------------------------------------------ Swimmer 1 Gender
+// +-------------------------------------------------------- Line code (F3 = Relay Event Entry)
+//
+//
+//   [  0:1  ]  Line ID
+//   [  2:2  ]  Swimmer 1 Gender     M=Male,F=Female
+//   [  3:7  ]  Swimmer 1 Id         Must match a D1 record
+//   [  8:12 ]  Swimmer 1 Abbr       First five digits of the last name
+//   [ 13:13 ]  Swimmer 1 Gender     M=Male,F=Female, B=Boy, G=Girl
+//   [ 14:14 ]  Swimmer 1 Relay Leg  1-8
+//   [ 15:15 ]  Swimmer 2 Gender     M=Male,F=Female
+//   [ 16:20 ]  Swimmer 2 Id         Must match a D1 record
+//   [ 21:25 ]  Swimmer 2 Abbr       First five digits of the last name
+//   [ 26:26 ]  Swimmer 2 Gender     M=Male,F=Female, B=Boy, G=Girl
+//   [ 27:27 ]  Swimmer 2 Relay Leg  1-8
+//   [ 28:28 ]  Swimmer 3 Gender     M=Male,F=Female
+//   [ 29:33 ]  Swimmer 3 Id         Must match a D1 record
+//   [ 34:38 ]  Swimmer 3 Abbr       First five digits of the last name)
+//   [ 39:39 ]  Swimmer 3 Gender     M=Male,F=Female, B=Boy, G=Girl
+//   [ 40:40 ]  Swimmer 3 Relay Leg  1-8
+//   [ 41:41 ]  Swimmer 4 Gender     M=Male,F=Female
+//   [ 42:46 ]  Swimmer 4 Id         Must match a D1 record
+//   [ 47:51 ]  Swimmer 4 Abbr       First five digits of the last name
+//   [ 52:52 ]  Swimmer 4 Gender     M=Male,F=Female, B=Boy, G=Girl
+//   [ 53:53 ]  Swimmer 4 Relay Leg  1-8
+//   [ 54:127]  Unused
+//   [128:129]  Checksum
+//
+
+//*************************************************************************************************************************************
+// Split Times
+//
+//                                                                                                     1 1 1 1 1 1 1 1 1 1 1 1 1 1 11
+//           1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 9 9 9 9 9 0 0 0 0 0 1 1 1 1 1 2 2 2 2 22  
+// 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 89
+// |         |         |         |         |         |         |         |         |         |         |         |         |        |
+// G1F 2   29.13F 4   61.05F 6   94.46F 8  129.27F10  164.63F12  200.08F14  236.74F16  273.99F18  310.98F20  345.36                72
+// \/|\/\______/
+// | | |    |
+// | | |    +-- Time                        \
+// | | +------- Length                       >Same format for the other records (2-10)
+// | +--------- Result Type (Final, Prelim) /
+// +-- Line ID
+//
+//
+//
+//
+//
+//
+// EOF
+//
+

@@ -14,6 +14,7 @@ class File implements JsonSerializable
 {
 
     private $path;
+    private $type;
     private $orgCode;
     private $orgDescription;
     private $sdifVersion;
@@ -34,20 +35,28 @@ class File implements JsonSerializable
         $this->path = $value;
     }
     
+    public function getType(): string {
+        return $this->type;
+    }
+    
+    public function setType(string $value) {
+        $this->type = $value;
+    }
+    
     public function getOrgCode(): string {
         return $this->orgCode;
     }
     
     public function setOrgCode(string $value) {
         $this->orgCode = $value;
-        $this->setOrgDescription($value);
+        $this->setOrgDescriptionFromCode($value);
     }
     
     public function getOrgDescription(): string {
         return $this->orgDescription;
     }
     
-    public function setOrgDescription(string $value) {
+    private function setOrgDescriptionFromCode(string $value) {
         
         switch ($value) {
             case '1':
@@ -83,6 +92,10 @@ class File implements JsonSerializable
         }
     }
     
+    public function setOrgDescription(string $value) {
+        $this->orgDescription = $value;
+    }
+    
     public function getSdifVersion(): string {
         return $this->sdifVersion;
     }
@@ -97,14 +110,14 @@ class File implements JsonSerializable
     
     public function setCode(int $value) {
         $this->code = $value;
-        $this->setDescription($value);
+        $this->setDescriptionFromCode($value);
     }
     
     public function getDescription(): string {
         return $this->description;
     }
     
-    private function setDescription(int $code) {
+    private function setDescriptionFromCode(int $code) {
         
         switch ($code) {
             case 1:
@@ -149,6 +162,10 @@ class File implements JsonSerializable
         }
     }
     
+    public function setDescription(string $value) {
+        $this->description = $value;
+    }
+    
     public function getSoftware(): string {
         return $this->software;
     }
@@ -190,11 +207,32 @@ class File implements JsonSerializable
     }
     
     public function getMeet(): Meet {
+        if (empty($this->meet)) {
+            return new Meet();
+        }
         return $this->meet;
     }
     
     public function setMeet(Meet $value) {
         $this->meet = $value;
+    }
+    
+    public function getRecommendedFileName(): string {
+        
+        // [meet date] [meet name] [course] ([file date]-[E#]-[T#]-[S#].sd3)
+        
+        $newName = sprintf('%s %s %s (%s-E%d-T%d-S%d).%s', 
+            $this->meet->getStartDate(), 
+            $this->meet->getName(), 
+            $this->meet->getCourse(), 
+            $this->getDate(),
+            $this->meet->getEventCount(), 
+            $this->meet->getTeamCount(), 
+            $this->meet->getSwimmerCount(),
+            $this->type);
+        //Removing non-friendly path characters
+        return mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $newName);
+        
     }
     
     /*

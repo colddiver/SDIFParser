@@ -37,8 +37,12 @@ class Split implements JsonSerializable
     }
     
     public function getCumulativeTime(): float {
-        //return $this->formatTime($this->cumulativeTime);
-        return $this->cumulativeTime;
+        
+        if (isset($this->cumulativeTime)) {
+            return $this->cumulativeTime;
+        } else {
+            return 0.0;
+        }
     }
     
     public function setCumulativeTime(float $value) {
